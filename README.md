@@ -21,6 +21,10 @@ _Cheat turbine is currently under active development, im trying to add new featu
 _A somewhat blurry roadmap can be found in [src/main.cpp](src/main.cpp)_
 
 ## Screenshots
+![Screenshot1](https://github.com/rednik1337/CheatTurbine/assets/84843838/2f67c9d5-30e8-4d2c-9163-659e51c0f7b6)
+
+
+![Screenshot2](https://github.com/rednik1337/CheatTurbine/assets/84843838/bec26e7b-b803-4b5c-9f73-df9219d791c9)
 
 ## Getting started
 
