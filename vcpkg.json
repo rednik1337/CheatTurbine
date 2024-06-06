@@ -1,0 +1,23 @@
+{
+  "name": "cheat-turbine",
+  "version-string": "0.1.0",
+  "dependencies": [
+    {
+      "name": "imgui",
+      "features": [
+        "vulkan-binding",
+        "glfw-binding",
+        "docking-experimental"
+      ]
+    },
+    {
+      "name": "vulkan"
+    },
+    {
+      "name": "vulkan-headers"
+    },
+    {
+      "name": "glfw3"
+    }
+  ]
+}
