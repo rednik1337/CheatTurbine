@@ -15,6 +15,6 @@
 #include "pointerScan/pointerScanWindow.h"
 #include "pointerMapManager/pointerMapManagerWindow.h"
 #include "pchainEditor/pchainEditorWindow.h"
-
+#include "structureDissector/structureDissectorWindow.h"
 
 #endif //CHEAT_TURBINE_WINDOWS_H

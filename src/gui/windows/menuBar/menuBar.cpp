@@ -64,6 +64,8 @@ void MenuBarWindow::draw() {
                     Gui::addWindow(new PointerScanWindow());
                 if (ImGui::MenuItem("Pointermap manager"))
                     Gui::addWindow(new PointerMapManagerWindow());
+                if (ImGui::MenuItem("Structure dissector"))
+                    Gui::addWindow(new StructureDissectorWindow());
                 ImGui::EndMenu();
             }
             ImGui::EndMenu();

@@ -1,16 +1,19 @@
 #ifndef CHEAT_TURBINE_VALUETYPE_H
 #define CHEAT_TURBINE_VALUETYPE_H
+#include <sys/types.h>
 
-enum ValueType : unsigned {
-    isSigned =  1 << 0,
-    i64 =       1 << 1,
-    i32 =       1 << 2,
-    i16 =       1 << 3,
-    i8 =        1 << 4,
-    f64 =       1 << 5,
-    f32 =       1 << 6,
-    pchain =    1 << 7,
-    sig =       1 << 8,
+enum ValueType : u_int32_t {
+    pchain =    1 << 0,
+    isSigned =  1 << 1,
+    // signature = 1 << 2,
+
+    i64 =       1 << 2,
+    i32 =       1 << 3,
+    i16 =       1 << 4,
+    i8 =        1 << 5,
+    f64 =       1 << 6,
+    f32 =       1 << 7,
+    string =    1 << 8,
 };
 
 #endif //CHEAT_TURBINE_VALUETYPE_H

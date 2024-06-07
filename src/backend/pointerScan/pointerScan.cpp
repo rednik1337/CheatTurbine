@@ -3,7 +3,6 @@
 #include "../selectedProcess/selectedProcess.h"
 
 #include <queue>
-#include <thread>
 #include <algorithm>
 #include <set>
 

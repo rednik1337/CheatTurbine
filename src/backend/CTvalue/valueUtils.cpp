@@ -4,13 +4,13 @@
 
 
 unsigned ValueUtils::sizeofValueType(const ValueType valueType) {
-    static constexpr std::array<unsigned, 8> sizes{8, 4, 2, 1, 8, 4};
+    static constexpr std::array<unsigned, 7> sizes{8, 4, 2, 1, 8, 4, 0};
     return sizes[valueIndex(valueType)];
 }
 
 
 unsigned ValueUtils::valueIndex(const ValueType valueType) {
-    return std::log2(valueType >> 1);
+    return std::log2(valueType >> 2);
 }
 
 
@@ -33,6 +33,9 @@ std::string ValueUtils::format(const ValueType valueType, void* mem, bool hex) {
         fmt += "h";
     else if (valueType & i8)
         fmt += "hh";
+    else if (valueType & string)
+        fmt += "%s";
+
     if (hex)
         fmt += valueType & (f32 | f64) ? "a" : "x";
     else
@@ -50,6 +53,8 @@ std::string ValueUtils::format(const ValueType valueType, void* mem, bool hex) {
         sprintf(buf, fmt.c_str(), *(int16_t*)mem);
     else if (valueType & i8)
         sprintf(buf, fmt.c_str(), *(int8_t*)mem);
+    else if (valueType & string)
+        sprintf(buf, fmt.c_str(), (char*)mem);
 
     return buf;
 }
