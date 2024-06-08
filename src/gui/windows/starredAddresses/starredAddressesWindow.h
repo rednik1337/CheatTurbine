@@ -13,7 +13,7 @@ public:
 
     void draw() override;
 
-    void addAddress(const std::string& name, void* address, ValueType valueType);
+    void addAddress(const std::string& name, void* address, ValueType valueType, int stringSize=0);
     void addAddress(const std::string& name, void* address, ValueType valueType, PointerChain pointerChain);
     void getAddresses();
 

@@ -17,6 +17,7 @@ enum DisplayType {
 
 class StarredAddress {
 public:
+    int stringSize;
     std::string name;
     ValueType valueType;
     void* address;
@@ -27,7 +28,7 @@ public:
 
     void update();
 
-    StarredAddress(std::string name, ValueType valueType, void* address);
+    StarredAddress(std::string name, ValueType valueType, void* address, int stringSize=0);
 };
 
 

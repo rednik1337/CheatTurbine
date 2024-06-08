@@ -19,7 +19,7 @@ bool Widgets::valueInputTrueOnEditing(const ValueType& valueType, void* to, cons
 
 
 bool Widgets::valueInputTrueOnDeactivation(const ValueType& valueType, void* to, bool hex, const int bufSize, bool pointer) {
-    ImGui::PushID(int((unsigned long long)to << 1));
+    ImGui::PushID((void*)((u_int64_t)to << 1));
     if (valueType & string)
         ImGui::InputText("##ValueInputD", (char*)to, bufSize, hex ? ImGuiInputTextFlags_CharsHexadecimal : 0);
     else
@@ -57,7 +57,7 @@ void Widgets::valueText(const ValueType& valueType, void* value) {
 void Widgets::valueTypeSelector(ValueType& valueType, bool enablePchain) {
     const std::array<std::string, 9> items{"pchain", "signed?", "int64", "int32", "int16", "int8", "float64", "float32", "string"};
     unsigned currentItem = std::log2(valueType & ~isSigned & ~pchain);
-    std::string previewString = (valueType & isSigned ? "" : "u") + items[currentItem];
+    std::string previewString = (valueType & isSigned | (valueType & string) >> 7 ? "" : "u") + items[currentItem];
     if (valueType & pchain)
         previewString = "pchain -> " + previewString;
     if (ImGui::BeginCombo("##ValueTypeCombo", previewString.c_str())) {
@@ -79,6 +79,8 @@ void Widgets::valueTypeSelector(ValueType& valueType, bool enablePchain) {
     }
     if (valueType & (f32 | f64))
         valueType = static_cast<ValueType>(valueType | isSigned);
+    // else if (valueType & string)
+    //     valueType = ValueType(valueType | ~isSigned);
     valueType = ValueType(1 << currentItem | valueType & isSigned | valueType & pchain);
 }
 

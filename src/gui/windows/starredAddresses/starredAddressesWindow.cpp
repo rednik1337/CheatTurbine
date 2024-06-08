@@ -249,8 +249,8 @@ void StarredAddressesWindow::draw() {
     ImGui::End();
 }
 
-void StarredAddressesWindow::addAddress(const std::string& name, void* address, ValueType valueType) {
-    addresses.emplace_back(name, valueType, address);
+void StarredAddressesWindow::addAddress(const std::string& name, void* address, ValueType valueType, int stringSize) {
+    addresses.emplace_back(name, valueType, address, stringSize);
 }
 
 void StarredAddressesWindow::addAddress(const std::string& name, void* address, ValueType valueType, PointerChain pointerChain) {

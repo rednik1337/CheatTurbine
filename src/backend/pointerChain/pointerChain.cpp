@@ -9,6 +9,8 @@
 void* PointerChain::getTail() {
     u_int64_t addr = (u_int64_t)head;
     bool invalid = false;
+    if (offsets.empty())
+        return nullptr;
     for (int i = 0; i < offsets.size() - 1; ++i) {
         addr += offsets[i];
         if (!VirtualMemory::read((void*)addr, &addr, 8))
@@ -21,9 +23,9 @@ void* PointerChain::getTail() {
 
 void PointerChain::updateHead(Regions& parsedRegions) {
     auto region = parsedRegions.get(path, regionOffset);
-    if (region.has_value()) {
+    if (region.has_value())
         head = region.value().start;
-    }
+
 }
 
 PointerChain::PointerChain(const std::string& path, void* head, const std::vector<int>& offsets, const u_int64_t regionOffset) {

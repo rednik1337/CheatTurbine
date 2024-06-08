@@ -3,16 +3,18 @@
 #include "../../../backend/virtualMemory/virtualMemory.h"
 #include "../../widgets/widgets.h"
 #include "../../../backend/regions/regions.h"
+#include "../../gui.h"
+#include "../../windows/windows.h"
 
 #include <vector>
 #include <imgui_stdlib.h>
-#include <array>
 #include <cmath>
 #include <format>
+#include <queue>
 #include <set>
 
 
-void StructureDissectorWindow::guessTypes(std::vector<std::vector<StructureField> >& fields) {
+void StructureDissectorWindow::guessTypes(std::vector<std::list<StructureField> >& fields) {
     Regions regions;
     regions.parse();
 
@@ -25,8 +27,7 @@ void StructureDissectorWindow::guessTypes(std::vector<std::vector<StructureField
         auto currChar = *((char*)buf + i);
         if (currChar <= 126 and currChar >= 32 and (strLen > 0 or i % 4 == 0)) {
             ++strLen;
-        } else if (currChar == 0 and strLen >= 2) {
-            ++strLen;
+        } else if ((currChar == 0 and strLen >= 2) or strLen >= 32) {
             int strLenExtended = strLen;
             if (strLen % 4)
                 strLenExtended += 4 - strLen % 4;
@@ -68,12 +69,26 @@ void StructureDissectorWindow::guessTypes(std::vector<std::vector<StructureField
     }
 }
 
-void StructureDissectorWindow::drawFields(std::vector<std::vector<StructureField> >& fields) {
-    for (int offset = 0; offset < fields.size(); ++offset) {
+void StructureDissectorWindow::drawFields(std::vector<std::list<StructureField> >& fields, u_int64_t currentAddress) {
+    if (fields.empty()) {
+        fields.resize(structureSize);
+        guessTypes(fields);
+    } else if (fields.size() < structureSize) {
+        fields.resize(structureSize);
+        for (u_int64_t i = structureSize / 2; i < structureSize; i += 4)
+            fields[i].emplace_back(i32);
+
+    }
+
+
+    for (int offset = 0; offset < fields.size(); ++offset, ++currentAddress) {
         if (fields[offset].empty())
             continue;
 
-        for (auto& [type, description, stringSize, pointerFields]: fields[offset]) {
+
+        for (auto it = fields[offset].begin(); it != fields[offset].end(); ++it) {
+            auto& [type, description, stringSize, pointerFields] = *it;
+
             ImGui::PushID(&type);
             ImGui::AlignTextToFramePadding();
 
@@ -81,7 +96,8 @@ void StructureDissectorWindow::drawFields(std::vector<std::vector<StructureField
             ImGui::TableNextColumn();
 
             if (type & pchain) {
-                const bool open = ImGui::TreeNodeEx(std::format("{}", offset).c_str());
+                ImGui::SetNextItemWidth(-1);
+                const bool open = ImGui::TreeNodeEx(std::format("{}", offset).c_str(), ImGuiTreeNodeFlags_SpanFullWidth);
 
                 ImGui::TableNextColumn();
                 ImGui::SetNextItemWidth(-1);
@@ -100,19 +116,13 @@ void StructureDissectorWindow::drawFields(std::vector<std::vector<StructureField
                         continue;
                     }
 
-                    if (pointerFields.empty()) {
-                        pointerFields.resize(256);
-                        guessTypes(pointerFields);
-                    }
-
-                    drawFields(pointerFields);
+                    drawFields(pointerFields, currentAddress);
 
                     VirtualMemory::read(address, buf, structureSize);
                     ImGui::TreePop();
                 }
 
-                ImGui::PopID();
-                continue;
+                goto END;
             }
 
             ImGui::SetNextItemWidth(-1);
@@ -131,15 +141,71 @@ void StructureDissectorWindow::drawFields(std::vector<std::vector<StructureField
             ImGui::SetNextItemWidth(-1);
             ImGui::InputText("##desc", &description);
 
+
+        END:
+            ImGui::AlignTextToFramePadding();
+            ImGui::SameLine();
+            ImGui::PushStyleColor(ImGuiCol_HeaderHovered, 0);
+            ImGui::Selectable("##Selectable", false, ImGuiSelectableFlags_SpanAllColumns);
+            ImGui::PopStyleColor();
+
+            static StructureField structureField{i32};
+            static int newFieldOffset = -1235;
+            static int popupOpened = 0;
+            if (ImGui::BeginPopupContextItem("##Popup")) {
+                popupOpened = offset;
+                ImGui::PopStyleColor();
+                if (ImGui::BeginMenu("Add new")) {
+                    if (newFieldOffset == -1235)
+                        newFieldOffset = offset;
+                    ImGui::InputInt(std::format("Offset = {:p}", (void*)(currentAddress + newFieldOffset)).c_str(), &newFieldOffset, 1, 10, ImGuiInputTextFlags_CharsHexadecimal);
+                    Widgets::valueTypeSelector(structureField.type, false);
+                    ImGui::SameLine();
+                    ImGui::TextUnformatted("Type");
+                    ImGui::InputText("Description", &structureField.description);
+                    ImGui::NewLine();
+                    if (ImGui::Button("Add"))
+                        fields[newFieldOffset].emplace_back(structureField);
+
+                    ImGui::EndMenu();
+                }
+
+                if (ImGui::MenuItem("Remove"))
+                    it = std::prev(fields[offset].erase(it));
+
+                if (ImGui::BeginMenu("Add to starred")) {
+                    for (const auto starredAddressesWindow: Gui::getWindows<StarredAddressesWindow>()) {
+                        if (ImGui::MenuItem(starredAddressesWindow->name.c_str()))
+                            starredAddressesWindow->addAddress("New address", (void*)currentAddress, type, stringSize);
+                    }
+
+                    ImGui::EndMenu();
+                }
+
+                ImGui::PushStyleColor(ImGuiCol_FrameBg, 0);
+                ImGui::EndPopup();
+            } else {
+                if (popupOpened == offset) {
+                    newFieldOffset = -1235;
+                    popupOpened = 0;
+                }
+            }
+
+            if (ImGui::IsItemHovered() and ImGui::IsMouseDoubleClicked(0)) {
+                for (const auto starredAddressesWindow: Gui::getWindows<StarredAddressesWindow>()) {
+                    starredAddressesWindow->addAddress("New address", (void*)currentAddress, type, stringSize);
+                    break;
+                }
+            }
             ImGui::PopID();
         }
     }
-    // ImGui::TableNextRow();
-    // ImGui::TableNextColumn();
-    // if (ImGui::Button("Add fields")) {
-    //     structureSize *= 2;
-    //     buf = realloc(buf, structureSize + 56);
-    // }
+    ImGui::TableNextRow();
+    ImGui::TableNextColumn();
+    if (ImGui::Button("Add fields")) {
+        structureSize *= 2;
+        buf = realloc(buf, structureSize + 56);
+    }
 }
 
 
@@ -171,7 +237,7 @@ void StructureDissectorWindow::draw() {
 
         ImGui::PushStyleColor(ImGuiCol_FrameBg, 0);
 
-        drawFields(mainFields);
+        drawFields(mainFields, (u_int64_t)address);
 
         ImGui::PopStyleColor();
 
