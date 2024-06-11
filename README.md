@@ -16,7 +16,7 @@ _Cheat Engine alternative for linux_
 - Memory editor
 - Extremely unstable BFS pointer scanner
 
-_Cheat turbine is currently under active development, im trying to add new features every day_
+_Cheat turbine is currently under active development, so expect this list to grow_
 
 _A somewhat blurry roadmap can be found in [src/main.cpp](src/main.cpp)_
 
@@ -25,6 +25,10 @@ _A somewhat blurry roadmap can be found in [src/main.cpp](src/main.cpp)_
 
 
 ![Screenshot2](https://github.com/rednik1337/CheatTurbine/assets/84843838/bec26e7b-b803-4b5c-9f73-df9219d791c9)
+
+
+![Pasted image (2)](https://github.com/rednik1337/CheatTurbine/assets/84843838/6c5f9b98-83f7-4cca-bbda-65d9587513b8)
+
 
 ## Getting started
 
