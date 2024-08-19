@@ -89,9 +89,6 @@ void MenuBarWindow::draw() {
                     SelectedProcess::suspend();
             }
 
-            if (ImGui::MenuItem("Memory Editor"))
-                Gui::addWindow(new MemoryEditorWindow());
-
 
             ImGui::EndMenu();
         }

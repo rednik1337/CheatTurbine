@@ -10,7 +10,7 @@ void PchainEditorWindow::draw() {
     if (!ImGui::Begin(name.c_str(), &pOpen))
         return;
 
-    static u_int64_t mem;
+    static uint64_t mem;
     ImGui::InputText("Name", &address->name);
     Widgets::valueTypeSelector(address->valueType);
     ImGui::SameLine();
@@ -18,7 +18,7 @@ void PchainEditorWindow::draw() {
 
 
     PointerChain& pchain = address->pchain;
-    if (address->valueType & ValueType::pchain) {
+    if (address->valueType.flags & CTValueFlags::pchain) {
         static int selectedI = -1;
         static Region selectedRegion;
         std::string preview;
@@ -78,7 +78,7 @@ void PchainEditorWindow::draw() {
                 if (!VirtualMemory::read((char*)prevAddr + i, &nextAddr, 8))
                     ImGui::InputInt(std::format("{:p} + {:x} = ???", prevAddr, i).c_str(), &i, 1, 100, ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_EnterReturnsTrue);
                 else
-                    ImGui::InputInt(std::format("{:p} + {:x} = {:p} ({})", prevAddr, i, (void*)((char*)prevAddr + i), ValueUtils::format(ValueType(address->valueType & ~ValueType::pchain), &nextAddr)).c_str(), &i, 1, 100, ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_EnterReturnsTrue);
+                    ImGui::InputInt(std::format("{:p} + {:x} = {:p} ({})", prevAddr, i, (void*)((char*)prevAddr + i), address->valueType.format(&nextAddr, false)).c_str(), &i, 1, 100, ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_EnterReturnsTrue);
             } else {
                 if (!VirtualMemory::read((char*)prevAddr + i, &nextAddr, 8))
                     ImGui::InputInt(std::format("[{:p} + {:x}] -> ???", prevAddr, i).c_str(), &i, 1, 100, ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_EnterReturnsTrue);
@@ -98,10 +98,10 @@ void PchainEditorWindow::draw() {
     } else {
         ImGui::InputScalar("Address", ImGuiDataType_S64, &address, nullptr, nullptr, "%p", ImGuiInputTextFlags_CharsHexadecimal);
 
-        if (!VirtualMemory::read(address, &mem, ValueUtils::sizeofValueType(address->valueType))) {
+        if (!VirtualMemory::read(address, &mem, address->valueType.getSize())) {
             ImGui::TextUnformatted("= ?");
         } else {
-            std::string text = "= " + ValueUtils::format(address->valueType, &mem);
+            const std::string text = "= " + address->valueType.format(&mem, false);
             ImGui::TextUnformatted(text.c_str());
         }
     }

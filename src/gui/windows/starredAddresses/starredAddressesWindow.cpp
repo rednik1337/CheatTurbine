@@ -19,8 +19,8 @@ void StarredAddressesWindow::addAddressPopup(bool& pOpen) {
     if (ImGui::Begin("Add address", &pOpen)) {
         static std::string name;
         static void* address{};
-        static ValueType valueType = i32;
-        static u_int64_t mem;
+        static CTvalue valueType = i32;
+        static uint64_t mem;
 
         ImGui::InputText("Name", &name);
         Widgets::valueTypeSelector(valueType);
@@ -28,7 +28,7 @@ void StarredAddressesWindow::addAddressPopup(bool& pOpen) {
         ImGui::TextUnformatted("Type");
 
         static PointerChain pchain;
-        if (valueType & ValueType::pchain) {
+        if (valueType.flags & CTValueFlags::pchain) {
             static int selectedI = -1;
             static Region selectedRegion;
             std::string preview;
@@ -74,7 +74,7 @@ void StarredAddressesWindow::addAddressPopup(bool& pOpen) {
                         ImGui::InputInt(std::format("{:p} + {:x} = ???", prevAddr, i).c_str(), &i, 1, 10, ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_EnterReturnsTrue);
                     } else {
                         void* resAddr = (char*)prevAddr + i;
-                        const auto fmt = std::format("{:p} + {:x} = {:p} ({})", prevAddr, i, resAddr, ValueUtils::format(ValueType(valueType & ~ValueType::pchain), &nextAddr));
+                        const auto fmt = std::format("{:p} + {:x} = {:p} ({})", prevAddr, i, resAddr, valueType.format(&nextAddr, false));
                         ImGui::InputInt(fmt.c_str(), &i, 1, 10, ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_EnterReturnsTrue);
                     }
                 } else {
@@ -96,17 +96,17 @@ void StarredAddressesWindow::addAddressPopup(bool& pOpen) {
         } else {
             ImGui::InputScalar("Address", ImGuiDataType_S64, &address, nullptr, nullptr, "%p", ImGuiInputTextFlags_CharsHexadecimal);
 
-            if (!VirtualMemory::read(address, &mem, ValueUtils::sizeofValueType(valueType))) {
+            if (!VirtualMemory::read(address, &mem, valueType.getSize())) {
                 ImGui::TextUnformatted("= ?");
             } else {
-                std::string text = "= " + ValueUtils::format(valueType, &mem);
+                std::string text = "= " + valueType.format(&mem, false);
                 ImGui::TextUnformatted(text.c_str());
             }
         }
         ImGui::NewLine();
         if (ImGui::Button("Add")) {
             addresses.emplace_back(name, valueType, address);
-            if (valueType & ValueType::pchain)
+            if (valueType.flags & CTValueFlags::pchain)
                 addresses.back().pchain = pchain;
         }
 
@@ -169,35 +169,28 @@ void StarredAddressesWindow::draw() {
 
                 ImGui::TableNextColumn();
                 ImGui::SetNextItemWidth(-1);
-                if (addresses[row].valueType & pchain)
+                if (addresses[row].valueType.flags & pchain)
                     ImGui::Text(" P->%p", addresses[row].address);
                 else
                     ImGui::InputScalar("##Address", ImGuiDataType_U64, &addresses[row].address, nullptr, nullptr, "%p", ImGuiInputTextFlags_CharsHexadecimal);
 
                 ImGui::TableNextColumn();
                 ImGui::SetNextItemWidth(-1);
-                if (addresses[row].valueType & pchain)
+                if (addresses[row].valueType.flags & pchain)
                     Widgets::valueTypeSelector(addresses[row].valueType);
                 else
                     Widgets::valueTypeSelector(addresses[row].valueType, false);
-                if (addresses[row].valueType & (i64 | f64)) {
-                    addresses[row].valueBytes.resize(8);
-                } else if (addresses[row].valueType & (i32 | f32)) {
-                    addresses[row].valueBytes.resize(4);
-                } else if (addresses[row].valueType & i16) {
-                    addresses[row].valueBytes.resize(2);
-                } else if (addresses[row].valueType & i8) {
-                    addresses[row].valueBytes.resize(1);
-                }
+
+                addresses[row].valueBytes.resize(addresses[row].valueType.getSize());
 
                 ImGui::TableNextColumn();
                 ImGui::SetNextItemWidth(-1);
-                if (addresses[row].valueType & pchain and !addresses[row].pchain.isValid) {
+                if (addresses[row].valueType.flags & pchain and !addresses[row].pchain.isValid) {
                     ImGui::TextUnformatted("???");
                 } else {
-                    if (Widgets::valueInputTrueOnDeactivation(ValueType(addresses[row].valueType & ~pchain), addresses[row].valueBytes.data(), addresses[row].displayType == hex)) {
+                    if (Widgets::valueInputTrueOnDeactivation(addresses[row].valueType, addresses[row].valueBytes.data(), addresses[row].displayType == hex)) {
                         VirtualMemory::write(addresses[row].valueBytes.data(), addresses[row].address, addresses[row].valueBytes.size());
-                        Gui::log("Wrote {} to {:p}", ValueUtils::format(addresses[row].valueType, addresses[row].valueBytes.data()), addresses[row].address);
+                        Gui::log("Wrote {} to {:p}", addresses[row].valueType.format(addresses[row].valueBytes.data(), false), addresses[row].address);
                     }
                 }
 
@@ -209,25 +202,27 @@ void StarredAddressesWindow::draw() {
                 ImGui::Selectable("##Selectable", false, ImGuiSelectableFlags_SpanAllColumns);
                 ImGui::PopStyleColor();
                 if (ImGui::BeginPopupContextItem("##Popup")) {
-                    if (ImGui::BeginMenu("Display type")) {
-                        auto decimalRepresentation = ValueUtils::format(addresses[row].valueType, addresses[row].valueBytes.data());
-                        auto hexRepresentation = ValueUtils::format(addresses[row].valueType, addresses[row].valueBytes.data(), true);
-                        if (ImGui::MenuItem(std::format("dec -> {}", decimalRepresentation).c_str()))
-                            addresses[row].displayType = dec;
+                    if (addresses[row].valueType.type != string) {
+                        if (ImGui::BeginMenu("Display type")) {
+                            const auto decimalRepresentation = addresses[row].valueType.format(addresses[row].valueBytes.data(), false);
+                            const auto hexRepresentation = addresses[row].valueType.format(addresses[row].valueBytes.data(), true);
+                            if (ImGui::MenuItem(std::format("dec -> {}", decimalRepresentation).c_str()))
+                                addresses[row].displayType = dec;
 
-                        if (ImGui::MenuItem(std::format("hex -> {}", hexRepresentation).c_str()))
-                            addresses[row].displayType = hex;
+                            if (ImGui::MenuItem(std::format("hex -> {}", hexRepresentation).c_str()))
+                                addresses[row].displayType = hex;
 
-                        ImGui::EndMenu();
+                            ImGui::EndMenu();
+                        }
                     }
                     if (ImGui::Selectable("Open in memory editor")) {
-                        Gui::windows.emplace_back(new MemoryEditorWindow((u_int64_t)addresses[row].address));
+                        Gui::windows.emplace_back(new MemoryEditorWindow((uint64_t)addresses[row].address));
                     }
                     if (ImGui::Selectable("Remove from starred")) {
                         addressesMarkedForDeletion.push_back(row);
                     }
 
-                    if (addresses[row].valueType & pchain)
+                    if (addresses[row].valueType.flags & CTValueFlags::pchain)
                         if (ImGui::Selectable("Edit")) {
                             auto* window = new PchainEditorWindow();
                             window->address = &addresses[row];
@@ -249,11 +244,12 @@ void StarredAddressesWindow::draw() {
     ImGui::End();
 }
 
-void StarredAddressesWindow::addAddress(const std::string& name, void* address, ValueType valueType, int stringSize) {
-    addresses.emplace_back(name, valueType, address, stringSize);
+void StarredAddressesWindow::addAddress(const std::string &name, void *address, CTvalue valueType) {
+    addresses.emplace_back(name, valueType, address);
 }
 
-void StarredAddressesWindow::addAddress(const std::string& name, void* address, ValueType valueType, PointerChain pointerChain) {
+
+void StarredAddressesWindow::addAddress(const std::string& name, void* address, CTvalue valueType, PointerChain pointerChain) {
     addresses.emplace_back(name, valueType, address);
     addresses.back().pchain = std::move(pointerChain);
 }

@@ -8,7 +8,6 @@
 
 #include <thread>
 
-#include "../../../backend/CTvalue/valueUtils.h"
 #include "../../../backend/selectedProcess/selectedProcess.h"
 #include "../../../backend/virtualMemory/virtualMemory.h"
 #include "../starredAddresses/starredAddressesWindow.h"
@@ -39,9 +38,9 @@ void PointerScanWindow::scanResults() {
                 }
                 ImGui::TableNextColumn();
                 void* addr = pchain.getTail();
-                u_int64_t value;
+                uint64_t value;
                 VirtualMemory::read(addr, &value, 4);
-                ImGui::Text("%x = %p (%s)", pchain.offsets.back(), addr, ValueUtils::format(ValueType(selectedValueType & ~ValueType::pchain), &value).c_str());
+                ImGui::Text("%x = %p (%s)", pchain.offsets.back(), addr, selectedValueType.format(&value, false).c_str());
 
                 ImGui::AlignTextToFramePadding();
                 ImGui::SameLine();
@@ -52,7 +51,7 @@ void PointerScanWindow::scanResults() {
                     if (ImGui::BeginMenu("Add to starred")) {
                         for (const auto starredAddressesWindow: Gui::getWindows<StarredAddressesWindow>()) {
                             if (ImGui::MenuItem(starredAddressesWindow->name.c_str()))
-                                starredAddressesWindow->addAddress("New pchain", nullptr, ValueType(selectedValueType | ValueType::pchain), pchain); // TODO: add window highlighting
+                                starredAddressesWindow->addAddress("New pchain", nullptr, {selectedValueType.type, CTValueFlags(selectedValueType.flags | CTValueFlags::pchain)}, pchain); // TODO: add window highlighting
                         }
 
                         ImGui::EndMenu();
@@ -62,7 +61,7 @@ void PointerScanWindow::scanResults() {
 
                 if (ImGui::IsItemHovered() and ImGui::IsMouseDoubleClicked(0)) {
                     for (const auto starredAddressesWindow: Gui::getWindows<StarredAddressesWindow>()) {
-                        starredAddressesWindow->addAddress("New pchain", nullptr, ValueType(selectedValueType | ValueType::pchain), pchain); // TODO: add window highlighting
+                        starredAddressesWindow->addAddress("New pchain", nullptr, {selectedValueType.type, CTValueFlags(selectedValueType.flags | CTValueFlags::pchain)}, pchain); // TODO: add window highlighting
                         break;
                     }
                 }
@@ -184,9 +183,9 @@ void PointerScanWindow::draw() {
         if (!selectedAddresses[0].second)
             ImGui::BeginDisabled();
         if (ImGui::Button("Scan")) {
-            std::vector<u_int64_t> targets;
+            std::vector<uint64_t> targets;
             for (const auto& [name, addr]: selectedAddresses)
-                targets.push_back((u_int64_t)addr);
+                targets.push_back((uint64_t)addr);
             targets.pop_back();
             selectedPmaps.pop_back();
             std::thread(&PointerScan::newScan, &pointerScan, targets, selectedPmaps).detach();
@@ -197,7 +196,7 @@ void PointerScanWindow::draw() {
         if (ImGui::Button("Add all")) {
             const auto window = Gui::getWindows<StarredAddressesWindow>().front();
             for (const auto& i: pointerScan.pChains)
-                window->addAddress("New pchain", nullptr, ValueType(selectedValueType | pchain), i);
+                window->addAddress("New pchain", nullptr, {selectedValueType.type, CTValueFlags(selectedValueType.flags | CTValueFlags::pchain)}, i);
         }
         if (!selectedAddresses[0].second)
             ImGui::EndDisabled();

@@ -15,6 +15,8 @@ int main() {
 // TODO: decompiler
 // TODO: code injection
 // TODO: python scripting api
-// TODO: compiler
+// TODO: shellcode compiler
 // TODO: disassembler
 // TODO: whats new window
+
+// TODO: string vm write

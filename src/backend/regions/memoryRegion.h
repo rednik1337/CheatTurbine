@@ -5,7 +5,7 @@
 
 
 enum RegionPerms : unsigned char {
-    none = 0,
+    no_perms = 0,
     r = 1 << 3,
     w = 1 << 2,
     x = 1 << 1,

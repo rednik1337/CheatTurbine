@@ -11,13 +11,13 @@
 
 
 class PointerMap {
-    void scan(void* regionStart, void* buf, u_int64_t size, u_int64_t offset, std::unordered_map<void*, std::unordered_set<void*> >& pmap);
+    void scan(void* regionStart, void* buf, uint64_t size, uint64_t offset, std::unordered_map<void*, std::unordered_set<void*> >& pmap);
 
 public:
     Regions regions;
 
-    u_int64_t addressesToScan = 0;
-    u_int64_t addressesScanned = 0;
+    uint64_t addressesToScan = 0;
+    uint64_t addressesScanned = 0;
     unsigned fastScanOffset;
     unsigned maxThreads;
     bool generationInProgress = false;

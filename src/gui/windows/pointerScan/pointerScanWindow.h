@@ -8,7 +8,7 @@
 class PointerScanWindow final : public Window {
     PointerScan pointerScan;
 public:
-    ValueType selectedValueType;
+    CTvalue selectedValueType;
     std::vector<PointerMap*> selectedPmaps{nullptr};
     std::vector<std::pair<std::string, void*> > selectedAddresses{{}};
 

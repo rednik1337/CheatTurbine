@@ -1,7 +1,7 @@
 #ifndef CHEAT_TURBINE_STARREDADDRESS_H
 #define CHEAT_TURBINE_STARREDADDRESS_H
 
-#include "../CTvalue/valueType.h"
+#include "../CTvalue/CTvalue.h"
 
 #include <string>
 #include <vector>
@@ -17,9 +17,8 @@ enum DisplayType {
 
 class StarredAddress {
 public:
-    int stringSize;
     std::string name;
-    ValueType valueType;
+    CTvalue valueType;
     void* address;
     bool isFrozen = false;
     std::vector<unsigned char> valueBytes;
@@ -27,8 +26,7 @@ public:
     PointerChain pchain;
 
     void update();
-
-    StarredAddress(std::string name, ValueType valueType, void* address, int stringSize=0);
+    StarredAddress(std::string name, CTvalue valueType, void* address);
 };
 
 

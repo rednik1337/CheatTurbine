@@ -13,9 +13,9 @@
 
 
 
-void PointerMap::scan(void* regionStart, void* buf, const u_int64_t size, const u_int64_t offset, std::unordered_map<void*, std::unordered_set<void*> >& pmap) {
-    for (u_int64_t i = 0; i < size; i += fastScanOffset) {
-        void* value = (void*)*(u_int64_t*)((char*)buf + i + offset);
+void PointerMap::scan(void* regionStart, void* buf, const uint64_t size, const uint64_t offset, std::unordered_map<void*, std::unordered_set<void*> >& pmap) {
+    for (uint64_t i = 0; i < size; i += fastScanOffset) {
+        void* value = (void*)*(uint64_t*)((char*)buf + i + offset);
         if (regions.isValidAddress(value) and !regions.isStaticAddress(value))
             pmap[value].insert((char*)regionStart + i + offset);
     }
@@ -45,7 +45,7 @@ void PointerMap::generate() {
     for (const auto& [start, end, mode, offset, device, inodeID, path]: regions.regions) {
         if (shouldStop)
             break;
-        const u_int64_t regionSize = (char*)end - (char*)start;
+        const uint64_t regionSize = (char*)end - (char*)start;
         if (!VirtualMemory::read(start, buf, regionSize)) {
             addressesScanned += regionSize / fastScanOffset;
             continue;
@@ -55,9 +55,9 @@ void PointerMap::generate() {
             i.clear();
         threads.clear();
 
-        u_int64_t sizePerThread = regionSize / maxThreads;
+        uint64_t sizePerThread = regionSize / maxThreads;
         sizePerThread -= sizePerThread % fastScanOffset;
-        u_int64_t sizeCovered = sizePerThread * (maxThreads - 1);
+        uint64_t sizeCovered = sizePerThread * (maxThreads - 1);
 
         for (int i = 0; i < maxThreads - 1; ++i)
             threads.emplace_back(&PointerMap::scan, this, start, buf, sizePerThread, i * sizePerThread, std::ref(maps[i]));
@@ -153,13 +153,13 @@ std::string PointerMap::load(const std::string& path) {
     if (strcmp(header, "CTptrmap"))
         return "File is not a pointermap";
 
-    u_int64_t mapSize;
+    uint64_t mapSize;
     infile >> mapSize;
     while (mapSize--) {
         void* addr;
         infile >> addr;
 
-        u_int64_t ptrsSize;
+        uint64_t ptrsSize;
         infile >> ptrsSize;
         while (ptrsSize--) {
             void* ptr;

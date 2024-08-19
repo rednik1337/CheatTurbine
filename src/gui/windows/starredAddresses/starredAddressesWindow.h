@@ -13,8 +13,8 @@ public:
 
     void draw() override;
 
-    void addAddress(const std::string& name, void* address, ValueType valueType, int stringSize=0);
-    void addAddress(const std::string& name, void* address, ValueType valueType, PointerChain pointerChain);
+    void addAddress(const std::string& name, void* address, CTvalue valueType);
+    void addAddress(const std::string& name, void* address, CTvalue valueType, PointerChain pointerChain);
     void getAddresses();
 
     StarredAddressesWindow() { name = "Starred"; }

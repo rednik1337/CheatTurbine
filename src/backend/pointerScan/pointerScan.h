@@ -6,7 +6,7 @@
 
 
 class PointerScan {
-    void scan(std::vector<u_int64_t> targets);
+    void scan(std::vector<uint64_t> targets);
     unsigned SPsubscriptionID;
 
 public:
@@ -24,7 +24,7 @@ public:
 
     std::vector<PointerChain> pChains;
 
-    void newScan(const std::vector<u_int64_t>& targets, std::vector<PointerMap*> pmaps);
+    void newScan(const std::vector<uint64_t>& targets, std::vector<PointerMap*> pmaps);
     void nextScan(const void* target);
 
     PointerScan();

@@ -2,11 +2,11 @@
 #define CHEAT_TURBINE_SCANNER_H
 
 #include "../regions/regions.h"
-#include "../CTvalue/valueType.h"
-
 #include <vector>
 #include <string>
 #include <functional>
+
+#include "../CTvalue/CTvalue.h"
 
 
 enum ScanType : unsigned {
@@ -28,6 +28,8 @@ class Scanner {
     template<typename T>
     std::function<bool(void*)> getCommonComparator();
 
+    std::function<bool(void*)> getStringComparator();
+
     std::function<bool(void*)> getTypeSpecificComparator();
 
     void newScan(std::function<bool(void*)> cmp);
@@ -36,16 +38,15 @@ class Scanner {
 
 public:
     Regions regions;
-    std::vector<u_int8_t> valueBytes;
-    std::vector<u_int8_t> valueBytesSecond;
-    std::string signature;
+    std::vector<uint8_t> valueBytes;
+    std::vector<uint8_t> valueBytesSecond;
 
     std::vector<void*> addresses;
     void* latestValues;
 
     const char* name;
     ScanType scanType = equal;
-    ValueType valueType = i32;
+    CTvalue valueType = i32;
     unsigned long long totalAddresses = 0;
     unsigned long long scannedAddresses = 0;
     unsigned long long latestValuesSize = 0;

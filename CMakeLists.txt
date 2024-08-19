@@ -12,12 +12,12 @@ message("Remove -march=native -mtune=native if distributing")
 
 set(CMAKE_C_FLAGS "Wall -Wextra -Winline -march=native -mtune=native -pipe")
 set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS} -g -ggdb3")
-set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS} -O3 -flto -fno-stack-protector -fcf-protection=none")
+set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS} -O3 -flto -fno-stack-protector -fcf-protection=none -fno-pie -no-pie")
 set(CMAKE_C_STANDARD 23)
 
 set(CMAKE_CXX_FLAGS "-Wall -Wextra -Winline -march=native -mtune=native -pipe")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} -g -ggdb3")
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -O3 -flto -fno-stack-protector -fcf-protection=none")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -O3 -flto -fno-stack-protector -fcf-protection=none -fno-pie -no-pie")
 set(CMAKE_CXX_STANDARD 26)
 
 set(CMAKE_THREAD_LIBS_INIT "-lpthread")
@@ -35,7 +35,6 @@ add_executable(CheatTurbine src/main.cpp
         src/gui/windows/processSelector/processSelectorWindow.cpp
         src/gui/windows/memoryEditor/memoryEditorWindow.cpp
         src/backend/selectedProcess/selectedProcess.cpp
-        src/backend/CTvalue/valueUtils.cpp
         src/backend/virtualMemory/virtualMemory.cpp
         src/backend/scanner/scanner.cpp
         src/gui/windows/dockSpace/dockSpaceWindow.cpp
@@ -48,8 +47,6 @@ add_executable(CheatTurbine src/main.cpp
         src/gui/windows/scanner/scannerWindow.cpp
         src/gui/windows/logs/logsWindow.cpp
         src/gui/windows/imguiDemo/imguiDemo.cpp
-        src/gui/windows/decompiler/decompilerWindow.cpp
-        src/gui/windows/disassembler/disassemblerWindow.cpp
         src/gui/windows/pointerScan/pointerScanWindow.cpp
         src/backend/regions/regions.cpp
         src/gui/widgets/widgets.cpp
@@ -59,6 +56,7 @@ add_executable(CheatTurbine src/main.cpp
         src/backend/pointerChain/pointerChain.cpp
         src/gui/windows/pchainEditor/pchainEditorWindow.cpp
         src/gui/windows/structureDissector/structureDissectorWindow.cpp
+        src/backend/CTvalue/CTvalue.cpp
 )
 
 target_link_libraries(CheatTurbine PRIVATE Vulkan::Vulkan imgui::imgui glfw)

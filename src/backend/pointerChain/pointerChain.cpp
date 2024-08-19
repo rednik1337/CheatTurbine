@@ -1,21 +1,23 @@
 #include "pointerChain.h"
 
-#include <iostream>
 
 #include "../../gui/gui.h"
 #include "../virtualMemory/virtualMemory.h"
 
 
 void* PointerChain::getTail() {
-    u_int64_t addr = (u_int64_t)head;
+    uint64_t addr = (uint64_t)head;
     bool invalid = false;
+
     if (offsets.empty())
         return nullptr;
+
     for (int i = 0; i < offsets.size() - 1; ++i) {
         addr += offsets[i];
         if (!VirtualMemory::read((void*)addr, &addr, 8))
             invalid = true;
     }
+
     addr += offsets.back();
     isValid = !invalid;
     return (void*)addr;
@@ -28,7 +30,7 @@ void PointerChain::updateHead(Regions& parsedRegions) {
 
 }
 
-PointerChain::PointerChain(const std::string& path, void* head, const std::vector<int>& offsets, const u_int64_t regionOffset) {
+PointerChain::PointerChain(const std::string& path, void* head, const std::vector<int>& offsets, const uint64_t regionOffset) {
     this->path = path;
     this->head = head;
     this->offsets = offsets;

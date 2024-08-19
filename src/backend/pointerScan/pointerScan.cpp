@@ -7,7 +7,7 @@
 #include <set>
 
 
-void PointerScan::scan(std::vector<u_int64_t> targets) {
+void PointerScan::scan(std::vector<uint64_t> targets) {
     std::vector<std::unordered_set<void*>::iterator> iterators(targets.size());
     std::vector<std::unordered_map<void*, std::unordered_set<void*> >*> maps;
     std::vector<Regions*> regions;
@@ -16,11 +16,11 @@ void PointerScan::scan(std::vector<u_int64_t> targets) {
         regions.emplace_back(&i->regions);
     }
 
-    std::set<std::vector<u_int64_t>> visited;
-    std::queue<std::pair<std::vector<int>, std::vector<u_int64_t> > > q;
+    std::set<std::vector<uint64_t>> visited;
+    std::queue<std::pair<std::vector<int>, std::vector<uint64_t> > > q;
     q.push({{}, targets});
 
-    std::vector<u_int64_t> nextTargets(targets.size());
+    std::vector<uint64_t> nextTargets(targets.size());
     std::vector<int> offsets;
     std::vector<int> resOffsets;
     offsets.reserve(maxDepth + 1);
@@ -41,7 +41,7 @@ void PointerScan::scan(std::vector<u_int64_t> targets) {
                     goto DONE;
                 }
                 iterators[i] = maps[i]->at((void*)(targets[i] + offset)).begin();
-                nextTargets[i] = (u_int64_t)*iterators[i];
+                nextTargets[i] = (uint64_t)*iterators[i];
             }
 
             offsets.back() = -offset;
@@ -51,19 +51,19 @@ void PointerScan::scan(std::vector<u_int64_t> targets) {
                     // bool areAllTargetsStatic = true;
                     // bool areTargetsDifferent = false;
                     // bool areSomeTargetsStatic = false;
-                    // u_int64_t prevDiff = nextTargets[0] - (u_int64_t)regions[0]->get((void*)nextTargets[0]).value().start;
+                    // uint64_t prevDiff = nextTargets[0] - (uint64_t)regions[0]->get((void*)nextTargets[0]).value().start;
                     // for (int i = 0; i < targets.size(); ++i) {
                     //     if (!regions[i]->isStaticAddress((void*)nextTargets[i]))
                     //         areAllTargetsStatic = false;
                     //     else
                     //         areSomeTargetsStatic = true;
-                    //     if (prevDiff != nextTargets[i] - (u_int64_t)regions[i]->get((void*)nextTargets[i]).value().start)
+                    //     if (prevDiff != nextTargets[i] - (uint64_t)regions[i]->get((void*)nextTargets[i]).value().start)
                     //         areTargetsDifferent = true;
                     // }
                     if (regions[0]->isStaticAddress((void*)nextTargets[0])) {
                         // if (!areTargetsDifferent) {
                             resOffsets = offsets;
-                            int regionOffset = nextTargets[0] - (u_int64_t)regions[0]->get((void*)nextTargets[0]).value().start;
+                            int regionOffset = nextTargets[0] - (uint64_t)regions[0]->get((void*)nextTargets[0]).value().start;
                             resOffsets.push_back(regionOffset);
                             std::ranges::reverse(resOffsets);
                             auto region = regions[0]->get((void*)nextTargets[0]).value();
@@ -82,11 +82,11 @@ void PointerScan::scan(std::vector<u_int64_t> targets) {
                     if (i == iterators.size() - 1)
                         goto DONE;
                     iterators[i] = maps[i]->at((void*)(targets[i] + offset)).begin();
-                    nextTargets[i] = (u_int64_t)*iterators[i];
+                    nextTargets[i] = (uint64_t)*iterators[i];
                     ++i;
                     ++iterators[i];
                 }
-                nextTargets[i] = (u_int64_t)*iterators[i];
+                nextTargets[i] = (uint64_t)*iterators[i];
             }
         DONE:
         }
@@ -94,7 +94,7 @@ void PointerScan::scan(std::vector<u_int64_t> targets) {
 }
 
 
-void PointerScan::newScan(const std::vector<u_int64_t>& targets, const std::vector<PointerMap*> pmaps) {
+void PointerScan::newScan(const std::vector<uint64_t>& targets, const std::vector<PointerMap*> pmaps) {
     maxOffsetPositive -= maxOffsetPositive % fastScanOffset;
     maxOffsetNegative -= maxOffsetNegative % fastScanOffset;
 

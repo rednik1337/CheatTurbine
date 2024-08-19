@@ -2,14 +2,14 @@
 #define CHEAT_TURBINE_MEMORYEDITORWINDOW_H
 
 #include "../generic/window.h"
-#include "../../../backend/CTvalue/valueType.h"
+#include "../../../backend/CTvalue/CTvalue.h"
 #include "../../../backend/selectedProcess/selectedProcess.h"
 
 
 class MemoryEditorWindow final : public Window {
-    u_int64_t startAddress;
-    u_int64_t baseAddress;
-    ValueType cellValueType = i8;
+    uint64_t startAddress;
+    uint64_t baseAddress;
+    CTvalue cellValueType = i8;
     bool asciiViewEnabled = true;
     bool displayAsHex = true;
     bool innerBordersEnabled = false;

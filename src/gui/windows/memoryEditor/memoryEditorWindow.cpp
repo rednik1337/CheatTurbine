@@ -4,7 +4,6 @@
 #include <algorithm>
 
 #include "memoryEditorWindow.h"
-#include "../../../backend/CTvalue/valueUtils.h"
 #include "../../../backend/virtualMemory/virtualMemory.h"
 #include "../../gui.h"
 
@@ -30,15 +29,15 @@ void MemoryEditorWindow::draw() {
 
 
     if (ImGui::Begin(name.c_str(), &pOpen, ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_MenuBar)) {
-        static constexpr std::array<unsigned, 6> symbolsPerValueHex{16, 8, 4, 2, 16, 8};
-        static constexpr std::array<unsigned, 6> symbolsPerValueDec{20, 11, 6, 4, 32, 32};
-        const unsigned symbolsPerValue = displayAsHex ? symbolsPerValueHex[ValueUtils::valueIndex(cellValueType)] : symbolsPerValueDec[ValueUtils::valueIndex(cellValueType)];
+        static constexpr std::array<unsigned, 6> symbolsPerValueHex{16, 8, 4, 2, 22, 20};
+        static constexpr std::array<unsigned, 6> symbolsPerValueDec{20, 11, 6, 4, 23, 15};
+        const unsigned symbolsPerValue = displayAsHex ? symbolsPerValueHex[cellValueType.type] : symbolsPerValueDec[cellValueType.type];
 
 
-        const ImGuiDataType ImGuiCellValueType = ValueUtils::CTValueTypeToImGui(cellValueType);
+        const ImGuiDataType ImGuiCellValueType = cellValueType.getImGuiDataType();
 
         const float spacingSize = ImGui::CalcTextSize(" ").x;
-        const float extraSpacingSize = spacingSize * float(2 + bool(cellValueType & (i32 | i64 | f32 | f64)));
+        const float extraSpacingSize = spacingSize * float(2 + bool(cellValueType.type == i32 or cellValueType.type == i64 or cellValueType.type == f32 or cellValueType.type == f64));
         constexpr unsigned extraSpacingAfterXValues = 4;
 
         const float addressColumnSize = ImGui::CalcTextSize(std::format(" {:p}: ", (void*)(startAddress + 100)).c_str()).x + extraSpacingSize;
@@ -49,39 +48,38 @@ void MemoryEditorWindow::draw() {
         const unsigned rowsAvailable = ImGui::GetWindowSize().y / ImGui::CalcTextSize(" ").y;
 
         updateChunk();
-        const unsigned sizeofValue = ValueUtils::sizeofValueType(cellValueType);
+        const unsigned sizeofValue = cellValueType.getSize();
 
         std::string fmtStr;
         if (displayAsHex) {
-            cellValueType = ValueType(cellValueType & ~isSigned);
-            fmtStr = "%0" + std::to_string(symbolsPerValueHex[ValueUtils::valueIndex(cellValueType)]);
-            if (cellValueType & f64)
-                fmtStr += "La";
-            else if (cellValueType & f32)
+            fmtStr = "%0" + std::to_string(symbolsPerValueHex[cellValueType.type]);
+            if (cellValueType.type == f64)
                 fmtStr += "a";
-            else if (cellValueType & i64)
+            else if (cellValueType.type == f32)
+                fmtStr += "a";
+            else if (cellValueType.type == i64)
                 fmtStr += "llx";
-            else if (cellValueType & i32)
+            else if (cellValueType.type == i32)
                 fmtStr += "lx";
-            else if (cellValueType & i16)
+            else if (cellValueType.type == i16)
                 fmtStr += "hx";
-            else if (cellValueType & i8)
+            else if (cellValueType.type == i8)
                 fmtStr += "hhx";
         } else {
-            if (cellValueType & f32)
-                fmtStr = "%f";
-            else if (cellValueType & f64)
-                fmtStr = "%Lf";
+            if (cellValueType.type == f32)
+                fmtStr = "%.9g";
+            else if (cellValueType.type == f64)
+                fmtStr = "%.17g";
             else {
-                if (cellValueType & i64)
+                if (cellValueType.type == i64)
                     fmtStr = "%ll";
-                else if (cellValueType & i32)
+                else if (cellValueType.type == i32)
                     fmtStr = "%l";
-                else if (cellValueType & i16)
+                else if (cellValueType.type == i16)
                     fmtStr = "%h";
-                else if (cellValueType & i8)
+                else if (cellValueType.type == i8)
                     fmtStr = "%hh";
-                fmtStr += cellValueType & isSigned ? "d" : "u";
+                fmtStr += cellValueType.flags & isSigned ? "d" : "u";
             }
         }
 
@@ -109,20 +107,20 @@ void MemoryEditorWindow::draw() {
                     ImGui::PushID(row * 4096 + i);
                     ImGui::SetNextItemWidth(-1);
 
-                    void* currentValue = (void*)((u_int64_t)chunk + (row * valuesPerRow + i) * sizeofValue);
-                    const void* previousValue = (void*)((u_int64_t)prevChunk + (row * valuesPerRow + i) * sizeofValue);
-                    u_int64_t currentAddress = startAddress + row * valuesPerRow * sizeofValue + i * sizeofValue;
+                    void* currentValue = (void*)((uint64_t)chunk + (row * valuesPerRow + i) * sizeofValue);
+                    const void* previousValue = (void*)((uint64_t)prevChunk + (row * valuesPerRow + i) * sizeofValue);
+                    uint64_t currentAddress = startAddress + row * valuesPerRow * sizeofValue + i * sizeofValue;
 
 
                     cellHighlightTimeLeft[row * valuesPerRow + i] -= 255 * (1 / io.Framerate);
-                    if (!scrolled and memcmp(currentValue, previousValue, ValueUtils::sizeofValueType(cellValueType)) != 0)
+                    if (!scrolled and memcmp(currentValue, previousValue, cellValueType.getSize()) != 0)
                         cellHighlightTimeLeft[row * valuesPerRow + i] = 255;
                     else if (cellHighlightTimeLeft[row * valuesPerRow + i] < 0)
                         cellHighlightTimeLeft[row * valuesPerRow + i] = 0;
                     ImGui::PushStyleColor(ImGuiCol_FrameBg, IM_COL32(15, 135, 250, cellHighlightTimeLeft[row * valuesPerRow + i]));
-                    if (ImGui::InputScalar("", ImGuiCellValueType, currentValue, nullptr, nullptr, fmtStr.c_str(), displayAsHex ? ImGuiInputTextFlags_CharsHexadecimal : 0 | ImGuiInputTextFlags_EnterReturnsTrue)) {
+                    if (ImGui::InputScalar("", ImGuiCellValueType, currentValue, nullptr, nullptr, fmtStr.c_str(), (displayAsHex ? ImGuiInputTextFlags_CharsHexadecimal : 0) | ImGuiInputTextFlags_EnterReturnsTrue)) {
                         VirtualMemory::write(currentValue, (void*)currentAddress, sizeofValue);
-                        Gui::log("Wrote {} to {:p}",  ValueUtils::format(cellValueType, currentValue, displayAsHex), (void*)currentAddress);
+                        Gui::log("Wrote {} to {:p}", cellValueType.format(currentValue, displayAsHex), (void*)currentAddress);
                     }
                     ImGui::PopStyleColor();
 
@@ -167,20 +165,19 @@ void MemoryEditorWindow::menuBar() {
     if (ImGui::BeginMenuBar()) {
         if (ImGui::BeginMenu("View")) {
             if (ImGui::BeginMenu("Value type")) {
-                const std::array valueTypeSelection{bool(cellValueType & i8), bool(cellValueType & i16), bool(cellValueType & i32), bool(cellValueType & i64), bool(cellValueType & f32), bool(cellValueType & f64)};
-                if (ImGui::MenuItem("signed", nullptr, cellValueType & isSigned))
-                    cellValueType = ValueType(cellValueType ^ isSigned);
-                if (ImGui::MenuItem("int8", nullptr, valueTypeSelection[0]))
+                if (ImGui::MenuItem("signed", nullptr, cellValueType.flags & isSigned))
+                    cellValueType.flags = CTValueFlags(cellValueType.flags ^ isSigned);
+                if (ImGui::MenuItem("int8", nullptr, bool(cellValueType.type == i8)))
                     cellValueType = i8;
-                if (ImGui::MenuItem("int16", nullptr, valueTypeSelection[1]))
+                if (ImGui::MenuItem("int16", nullptr, bool(cellValueType.type == i16)))
                     cellValueType = i16;
-                if (ImGui::MenuItem("int32", nullptr, valueTypeSelection[2]))
+                if (ImGui::MenuItem("int32", nullptr, bool(cellValueType.type == i32)))
                     cellValueType = i32;
-                if (ImGui::MenuItem("int64", nullptr, valueTypeSelection[3]))
+                if (ImGui::MenuItem("int64", nullptr, bool(cellValueType.type == i64)))
                     cellValueType = i64;
-                if (ImGui::MenuItem("float32", nullptr, valueTypeSelection[4]))
+                if (ImGui::MenuItem("float32", nullptr, bool(cellValueType.type == f32)))
                     cellValueType = f32;
-                if (ImGui::MenuItem("float64", nullptr, valueTypeSelection[5]))
+                if (ImGui::MenuItem("float64", nullptr, bool(cellValueType.type == f64)))
                     cellValueType = f64;
 
                 ImGui::EndMenu();

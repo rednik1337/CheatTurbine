@@ -29,7 +29,7 @@ void Regions::parse() {
         region.end = (void*)std::stoul(data, nullptr, 16);
 
         std::getline(iss, data, ' ');
-        region.mode = RegionPerms((data[0] != '-' ? r : none) | (data[1] != '-' ? w : none) | (data[2] != '-' ? x : none) | (data[0] == 'p' ? p : none));
+        region.mode = RegionPerms((data[0] != '-' ? r : no_perms) | (data[1] != '-' ? w : no_perms) | (data[2] != '-' ? x : no_perms) | (data[0] == 'p' ? p : no_perms));
 
         std::getline(iss, data, ' ');
         region.offset = std::stoul(data, nullptr, 16);
@@ -73,7 +73,7 @@ std::optional<Region> Regions::get(const void* address) {
     return std::nullopt;
 }
 
-std::optional<Region> Regions::get(const std::string& path, u_int64_t offset) {
+std::optional<Region> Regions::get(const std::string& path, uint64_t offset) {
     for (const auto& i: regions)
         if (i.path == path and i.offset == offset)
             return i;

@@ -47,14 +47,14 @@ void StructureDissectorWindow::guessTypes(std::vector<std::list<StructureField> 
 
         float_t f32v = *(float_t*)((char*)buf + i);
         double_t f64v = *(double_t*)((char*)buf + i);
-        void* pv = (void*)*(u_int64_t*)((char*)buf + i);
+        void* pv = (void*)*(uint64_t*)((char*)buf + i);
 
         int floatScore = std::fpclassify(f32v) == FP_NORMAL and f32v >= -1000000 and f32v <= 1000000;
         int doubleScore = std::fpclassify(f64v) == FP_NORMAL and f64v >= -1000000 and f64v <= 1000000;
         int pointerScore = regions.isValidAddress(pv);
 
         if (pointerScore > 0) {
-            fields[i].emplace_back(ValueType(pchain | i32), "");
+            fields[i].emplace_back(CTvalue{i32, pchain}, "");
             i += 4;
         } else if (floatScore > 0 or doubleScore > 0) {
             if (floatScore >= doubleScore)
@@ -69,15 +69,14 @@ void StructureDissectorWindow::guessTypes(std::vector<std::list<StructureField> 
     }
 }
 
-void StructureDissectorWindow::drawFields(std::vector<std::list<StructureField> >& fields, u_int64_t currentAddress) {
+void StructureDissectorWindow::drawFields(std::vector<std::list<StructureField> >& fields, uint64_t currentAddress) {
     if (fields.empty()) {
         fields.resize(structureSize);
         guessTypes(fields);
     } else if (fields.size() < structureSize) {
         fields.resize(structureSize);
-        for (u_int64_t i = structureSize / 2; i < structureSize; i += 4)
+        for (uint64_t i = structureSize / 2; i < structureSize; i += 4)
             fields[i].emplace_back(i32);
-
     }
 
 
@@ -95,7 +94,7 @@ void StructureDissectorWindow::drawFields(std::vector<std::list<StructureField> 
             ImGui::TableNextRow();
             ImGui::TableNextColumn();
 
-            if (type & pchain) {
+            if (type.flags & pchain) {
                 ImGui::SetNextItemWidth(-1);
                 const bool open = ImGui::TreeNodeEx(std::format("{}", offset).c_str(), ImGuiTreeNodeFlags_SpanFullWidth);
 
@@ -108,7 +107,7 @@ void StructureDissectorWindow::drawFields(std::vector<std::list<StructureField> 
                 Widgets::valueInputTrueOnDeactivation(i64, (char*)buf + offset, false, stringSize, true);
 
                 if (open) {
-                    void* pointsTo = (void*)*(u_int64_t*)((char*)buf + offset);
+                    void* pointsTo = (void*)*(uint64_t*)((char*)buf + offset);
                     if (!VirtualMemory::read(pointsTo, buf, structureSize)) {
                         ImGui::TextUnformatted("read error");
                         ImGui::TreePop();
@@ -135,7 +134,10 @@ void StructureDissectorWindow::drawFields(std::vector<std::list<StructureField> 
             ImGui::TableNextColumn();
             ImGui::SetNextItemWidth(-1);
 
-            Widgets::valueInputTrueOnDeactivation(type, (char*)buf + offset, false, stringSize);
+            if (Widgets::valueInputTrueOnDeactivation(type, (char*)buf + offset, false, stringSize)) {
+                VirtualMemory::write((char*)buf + offset, address + offset, type.getSize());
+                Gui::log("Wrote {} to {:p}", type.format((char*)buf + offset, false), address + offset);
+            }
 
             ImGui::TableNextColumn();
             ImGui::SetNextItemWidth(-1);
@@ -176,7 +178,7 @@ void StructureDissectorWindow::drawFields(std::vector<std::list<StructureField> 
                 if (ImGui::BeginMenu("Add to starred")) {
                     for (const auto starredAddressesWindow: Gui::getWindows<StarredAddressesWindow>()) {
                         if (ImGui::MenuItem(starredAddressesWindow->name.c_str()))
-                            starredAddressesWindow->addAddress("New address", (void*)currentAddress, type, stringSize);
+                            starredAddressesWindow->addAddress("New address", (void*)currentAddress, type);
                     }
 
                     ImGui::EndMenu();
@@ -193,7 +195,7 @@ void StructureDissectorWindow::drawFields(std::vector<std::list<StructureField> 
 
             if (ImGui::IsItemHovered() and ImGui::IsMouseDoubleClicked(0)) {
                 for (const auto starredAddressesWindow: Gui::getWindows<StarredAddressesWindow>()) {
-                    starredAddressesWindow->addAddress("New address", (void*)currentAddress, type, stringSize);
+                    starredAddressesWindow->addAddress("New address", (void*)currentAddress, type);
                     break;
                 }
             }
@@ -237,7 +239,7 @@ void StructureDissectorWindow::draw() {
 
         ImGui::PushStyleColor(ImGuiCol_FrameBg, 0);
 
-        drawFields(mainFields, (u_int64_t)address);
+        drawFields(mainFields, (uint64_t)address);
 
         ImGui::PopStyleColor();
 

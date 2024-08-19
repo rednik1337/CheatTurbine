@@ -83,31 +83,58 @@ std::function<bool(void*)> Scanner::getCommonComparator() {
     std::unreachable();
 }
 
+std::function<bool(void*)> Scanner::getStringComparator() {
+    static uint16_t tempStringSize;
+    tempStringSize = strlen((char*)valueBytes.data());
+
+    switch (scanType) {
+        case equal:
+            return [this](void* mem) {
+                return strncmp((char*)mem, (char*)valueBytes.data(), tempStringSize) == 0;
+            };
+        case changed:
+            return [this](void* mem) {
+                return strncmp((char*)mem, (char*)latestValues + scannedAddresses * valueBytes.size(), tempStringSize);
+            };
+        case unchanged:
+            return [this](void* mem) {
+                return strncmp((char*)mem, (char*)latestValues + scannedAddresses * valueBytes.size(), tempStringSize) == 0;
+            };
+        case unknown:
+            return [](void* mem) {
+                return *(uint8_t*)mem >= ' ' and *(uint8_t*)mem <= '~' and *(uint8_t*)(mem + 1) >= ' ' and *(uint8_t*)(mem + 1) <= '~';
+            };
+    }
+
+    std::unreachable();
+}
+
 
 std::function<bool(void*)> Scanner::getTypeSpecificComparator() {
-    if (valueType & isSigned) {
-        if (valueType & i64)
-            return getCommonComparator<int64_t>();
-        if (valueType & i32)
-            return getCommonComparator<int32_t>();
-        if (valueType & i16)
-            return getCommonComparator<int16_t>();
-        if (valueType & i8)
-            return getCommonComparator<int8_t>();
-    } else {
-        if (valueType & i64)
-            return getCommonComparator<u_int64_t>();
-        if (valueType & i32)
-            return getCommonComparator<u_int32_t>();
-        if (valueType & i16)
-            return getCommonComparator<u_int16_t>();
-        if (valueType & i8)
-            return getCommonComparator<u_int8_t>();
+    switch (valueType.type) {
+        case i64:
+            if (valueType.flags & isSigned)
+                return getCommonComparator<int64_t>();
+            return getCommonComparator<uint64_t>();
+        case i32:
+            if (valueType.flags & isSigned)
+                return getCommonComparator<int32_t>();
+            return getCommonComparator<uint32_t>();
+        case i16:
+            if (valueType.flags & isSigned)
+                return getCommonComparator<int16_t>();
+            return getCommonComparator<uint16_t>();
+        case i8:
+            if (valueType.flags & isSigned)
+                return getCommonComparator<int8_t>();
+            return getCommonComparator<uint8_t>();
+        case f64:
+            return getCommonComparator<double_t>();
+        case f32:
+            return getCommonComparator<float_t>();
+        case string:
+            return getStringComparator();
     }
-    if (valueType & f64)
-        return getCommonComparator<double_t>();
-    if (valueType & f32)
-        return getCommonComparator<float_t>();
 
     std::unreachable();
 }
@@ -150,11 +177,16 @@ void Scanner::newScan(const std::function<bool(void*)> cmp) {
 
         Gui::log("{}: Scanning region {} - {}", name, start, end);
 
-        for (unsigned long long i = 0; i < regionSize; i += fastScanOffset) {
+        for (uint64_t i = 0; i < regionSize; i += fastScanOffset) {
             if (cmp((char*)memory + i)) {
                 if (matchingAddresses * valueBytes.size() >= latestValuesSize) {
                     latestValuesSize *= 2;
                     latestValues = realloc(latestValues, latestValuesSize * valueBytes.size());
+                    if (!latestValues) {
+                        free(memory);
+                        Gui::log("{}: Out of memory", name);
+                        return;
+                    }
                 }
 
                 addresses.emplace_back((char*)start + i);
@@ -234,8 +266,8 @@ void Scanner::nextScan(const std::function<bool(void*)> cmp) {
 
 
 void Scanner::reset() {
-    valueBytes = std::vector<u_int8_t>(32);
-    valueBytesSecond = std::vector<u_int8_t>(32);
+    valueBytes = std::vector<uint8_t>(32);
+    valueBytesSecond = std::vector<uint8_t>(32);
     valueBytes.clear();
     valueBytesSecond.clear();
     latestValues = realloc(latestValues, 65535);

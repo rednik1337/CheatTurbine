@@ -7,6 +7,7 @@
 
 #include <imgui.h>
 #include <format>
+#include <iostream>
 
 void ScannerWindow::scanControls() {
     const bool isScanRunning = scanner.isScanRunning;
@@ -16,6 +17,10 @@ void ScannerWindow::scanControls() {
         ImGui::BeginDisabled();
 
     ImGui::BeginGroup();
+    const bool shouldDisable = scanner.scanType == unchanged or scanner.scanType == changed or scanner.scanType == unknown or scanner.scanType == increased or scanner.scanType == decreased;
+
+    if (shouldDisable)
+        ImGui::BeginDisabled(true);
     if (scanner.scanType == range) {
         ImGui::SetNextItemWidth(ImGui::GetWindowWidth() / 4 - ImGui::GetStyle().FramePadding.x);
         Widgets::valueInputTrueOnEditing(scanner.valueType, scanner.valueBytes.data());
@@ -23,15 +28,11 @@ void ScannerWindow::scanControls() {
         ImGui::SetNextItemWidth(ImGui::GetWindowWidth() / 4 - ImGui::GetStyle().FramePadding.x);
         Widgets::valueInputTrueOnEditing(scanner.valueType, scanner.valueBytesSecond.data());
     } else {
-        const bool shouldDisable = scanner.scanType == unchanged or scanner.scanType == changed or scanner.scanType == unknown or scanner.scanType == increased or scanner.scanType == decreased;
-
-        if (shouldDisable)
-            ImGui::BeginDisabled(true);
         ImGui::SetNextItemWidth(ImGui::GetWindowWidth() / 2);
-        Widgets::valueInputTrueOnEditing(scanner.valueType, scanner.valueBytes.data());
-        if (shouldDisable)
-            ImGui::EndDisabled();
+        Widgets::valueInputTrueOnEditing(scanner.valueType, scanner.valueBytes.data(), 256);
     }
+    if (shouldDisable)
+        ImGui::EndDisabled();
 
     if (scanner.isReset) {
         if (ImGui::Button("New"))
@@ -65,37 +66,48 @@ void ScannerWindow::scanControls() {
 
     ImGui::SetNextItemWidth(-1);
     Widgets::valueTypeSelector(scanner.valueType, false);
-    if (scanner.valueType & (i64 | f64)) {
-        scanner.valueBytes.resize(8);
-        scanner.valueBytesSecond.resize(8);
-    } else if (scanner.valueType & (i32 | f32)) {
-        scanner.valueBytes.resize(4);
-        scanner.valueBytesSecond.resize(4);
-    } else if (scanner.valueType & i16) {
-        scanner.valueBytes.resize(2);
-        scanner.valueBytesSecond.resize(2);
-    } else if (scanner.valueType & i8) {
-        scanner.valueBytes.resize(1);
-        scanner.valueBytesSecond.resize(1);
-    }
+    scanner.valueType.stringLength = 256;
+    scanner.valueBytes.resize(scanner.valueType.getSize());
+    scanner.valueBytesSecond.resize(scanner.valueType.getSize());
 
     if (!isScannerReset)
         ImGui::EndDisabled();
 
     ImGui::SetNextItemWidth(-1);
     if (isScannerReset) {
-        constexpr std::array indexMapping{equal, bigger, smaller, range, unknown};
-        const char* items[]{"Equal", "Bigger than", "Smaller than", "Range", "Unknown"};
-        int currentItem;
-        for (int i = 0; i < 5; ++i)
-            if (indexMapping[i] == scanner.scanType)
-                currentItem = i;
-        if (ImGui::Combo("##My Combo", &currentItem, items, IM_ARRAYSIZE(items)))
-            scanner.scanType = indexMapping[currentItem];
+        if (scanner.valueType.type == string) {
+            constexpr std::array indexMapping{equal, unknown};
+            const char* items[]{"Equal", "Unknown"};
+            int currentItem;
+            for (int i = 0; i < 2; ++i)
+                if (indexMapping[i] == scanner.scanType)
+                    currentItem = i;
+
+            if ((unsigned)currentItem > 2) {
+                currentItem = 0;
+                scanner.scanType = equal;
+            } else if (indexMapping[currentItem] != scanner.scanType) {
+                scanner.scanType = equal;
+            }
+            if (ImGui::Combo("##My Combo", &currentItem, items, IM_ARRAYSIZE(items)))
+                scanner.scanType = indexMapping[currentItem];
+        } else {
+            constexpr std::array indexMapping{equal, bigger, smaller, range, unknown};
+            const char* items[]{"Equal", "Bigger than", "Smaller than", "Range", "Unknown"};
+            int currentItem;
+            for (int i = 0; i < 5; ++i)
+                if (indexMapping[i] == scanner.scanType)
+                    currentItem = i;
+            if (ImGui::Combo("##My Combo", &currentItem, items, IM_ARRAYSIZE(items)))
+                scanner.scanType = indexMapping[currentItem];
+        }
     } else {
         if (scanner.scanType >= 10)
             scanner.scanType = equal;
-        ImGui::Combo("##scanner_scan_type", (int*)&scanner.scanType, "Equal\0Bigger than\0Smaller than\0Range\0Increased\0Increased by\0Decreased\0Decreased by\0Changed\0Unchanged\0\0");
+        if (scanner.valueType.type == string)
+            ImGui::Combo("##scanner_scan_type", (int*)&scanner.scanType, "Equal\0Changed\0Unchanged\0\0");
+        else
+            ImGui::Combo("##scanner_scan_type", (int*)&scanner.scanType, "Equal\0Bigger than\0Smaller than\0Range\0Increased\0Increased by\0Decreased\0Decreased by\0Changed\0Unchanged\0\0");
     }
 
     ImGui::EndGroup();
@@ -191,7 +203,7 @@ void ScannerWindow::scanResults() {
 
                 if (Widgets::valueInputTrueOnDeactivation(scanner.valueType, currentRowAddressValueBytes.data())) {
                     VirtualMemory::write(currentRowAddressValueBytes.data(), scanner.addresses[row], currentRowAddressValueBytes.size());
-                    Gui::log("Wrote {} to {:p}", ValueUtils::format(scanner.valueType, currentRowAddressValueBytes.data()), scanner.addresses[row]);
+                    Gui::log("Wrote {} to {:p}", scanner.valueType.format(currentRowAddressValueBytes.data(), false), scanner.addresses[row]);
                 }
 
 
