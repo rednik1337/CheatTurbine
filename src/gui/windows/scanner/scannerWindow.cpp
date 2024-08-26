@@ -202,8 +202,8 @@ void ScannerWindow::scanResults() {
                 VirtualMemory::read(scanner.addresses[row], currentRowAddressValueBytes.data(), currentRowAddressValueBytes.size());
 
                 if (Widgets::valueInputTrueOnDeactivation(scanner.valueType, currentRowAddressValueBytes.data())) {
-                    VirtualMemory::write(currentRowAddressValueBytes.data(), scanner.addresses[row], currentRowAddressValueBytes.size());
-                    Gui::log("Wrote {} to {:p}", scanner.valueType.format(currentRowAddressValueBytes.data(), false), scanner.addresses[row]);
+                    if (VirtualMemory::write(currentRowAddressValueBytes.data(), scanner.addresses[row], currentRowAddressValueBytes.size()))
+                        Gui::log("Wrote {} to {:p}", scanner.valueType.format(currentRowAddressValueBytes.data(), false), scanner.addresses[row]);
                 }
 
 

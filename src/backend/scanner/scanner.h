@@ -10,17 +10,17 @@
 
 
 enum ScanType : unsigned {
-    equal = 0,
-    bigger = 1,
-    smaller = 2,
-    range = 3,
-    increased = 4,
-    increasedBy = 5,
-    decreased = 6,
-    decreasedBy = 7,
-    changed = 8,
-    unchanged = 9,
-    unknown = 10
+    equal,
+    bigger,
+    smaller,
+    range,
+    increased,
+    increasedBy,
+    decreased,
+    decreasedBy,
+    changed,
+    unchanged,
+    unknown
 };
 
 

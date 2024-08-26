@@ -119,8 +119,8 @@ void MemoryEditorWindow::draw() {
                         cellHighlightTimeLeft[row * valuesPerRow + i] = 0;
                     ImGui::PushStyleColor(ImGuiCol_FrameBg, IM_COL32(15, 135, 250, cellHighlightTimeLeft[row * valuesPerRow + i]));
                     if (ImGui::InputScalar("", ImGuiCellValueType, currentValue, nullptr, nullptr, fmtStr.c_str(), (displayAsHex ? ImGuiInputTextFlags_CharsHexadecimal : 0) | ImGuiInputTextFlags_EnterReturnsTrue)) {
-                        VirtualMemory::write(currentValue, (void*)currentAddress, sizeofValue);
-                        Gui::log("Wrote {} to {:p}", cellValueType.format(currentValue, displayAsHex), (void*)currentAddress);
+                        if (VirtualMemory::write(currentValue, (void*)currentAddress, sizeofValue))
+                            Gui::log("Wrote {} to {:p}", cellValueType.format(currentValue, displayAsHex), (void*)currentAddress);
                     }
                     ImGui::PopStyleColor();
 
@@ -166,7 +166,7 @@ void MemoryEditorWindow::menuBar() {
         if (ImGui::BeginMenu("View")) {
             if (ImGui::BeginMenu("Value type")) {
                 if (ImGui::MenuItem("signed", nullptr, cellValueType.flags & isSigned))
-                    cellValueType.flags = CTValueFlags(cellValueType.flags ^ isSigned);
+                    cellValueType.flags = cellValueType.flags ^ isSigned;
                 if (ImGui::MenuItem("int8", nullptr, bool(cellValueType.type == i8)))
                     cellValueType = i8;
                 if (ImGui::MenuItem("int16", nullptr, bool(cellValueType.type == i16)))

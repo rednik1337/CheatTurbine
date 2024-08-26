@@ -6,17 +6,22 @@
 #include <list>
 #include <string_view>
 #include <format>
+#include <iomanip>
 #include <memory>
 
 
 namespace Gui {
     extern std::list<std::unique_ptr<Window>> windows;
-    extern std::list<std::string> logs;
+    extern std::list<std::pair<std::string, int>> logs;
 
     void mainLoop();
 
     void log(const std::string_view rt_fmt_str, auto&&... args) {
-        logs.emplace_back(std::vformat(rt_fmt_str, std::make_format_args(args...)));
+        std::string str = std::vformat(rt_fmt_str, std::make_format_args(args...));
+        if (str == logs.back().first)
+            logs.back().second++;
+        else
+            logs.emplace_back(str, 0);
     }
 
     void addWindow(Window* window);

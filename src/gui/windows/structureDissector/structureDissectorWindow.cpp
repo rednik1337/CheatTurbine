@@ -115,10 +115,18 @@ void StructureDissectorWindow::drawFields(std::vector<std::list<StructureField> 
                         continue;
                     }
 
+                    ImGui::TableNextColumn();
+                    ImGui::SetNextItemWidth(-1);
+                    ImGui::InputText("##desc", &description);
+
                     drawFields(pointerFields, currentAddress);
 
                     VirtualMemory::read(address, buf, structureSize);
                     ImGui::TreePop();
+                } else {
+                    ImGui::TableNextColumn();
+                    ImGui::SetNextItemWidth(-1);
+                    ImGui::InputText("##desc", &description);
                 }
 
                 goto END;
@@ -135,8 +143,8 @@ void StructureDissectorWindow::drawFields(std::vector<std::list<StructureField> 
             ImGui::SetNextItemWidth(-1);
 
             if (Widgets::valueInputTrueOnDeactivation(type, (char*)buf + offset, false, stringSize)) {
-                VirtualMemory::write((char*)buf + offset, address + offset, type.getSize());
-                Gui::log("Wrote {} to {:p}", type.format((char*)buf + offset, false), address + offset);
+                if (VirtualMemory::write((char*)buf + offset, address + offset, type.getSize()))
+                    Gui::log("Wrote {} to {:p}", type.format((char*)buf + offset, false), address + offset);
             }
 
             ImGui::TableNextColumn();
@@ -251,6 +259,7 @@ void StructureDissectorWindow::draw() {
 }
 
 
-StructureDissectorWindow::StructureDissectorWindow() {
+StructureDissectorWindow::StructureDissectorWindow(void* address) {
     name = "Structure dissector";
+    this->address = address;
 }

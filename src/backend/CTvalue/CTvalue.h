@@ -25,6 +25,18 @@ enum CTValueFlags : uint8_t {
 };
 
 
+inline CTValueFlags operator|(const CTValueFlags a, const CTValueFlags b) {
+    return CTValueFlags((uint8_t)a | (uint8_t)b);
+}
+
+inline CTValueFlags operator&(const CTValueFlags a, const CTValueFlags b) {
+    return CTValueFlags((uint8_t)a & (uint8_t)b);
+}
+
+inline CTValueFlags operator^(const CTValueFlags a, const CTValueFlags b) {
+    return CTValueFlags((uint8_t)a ^ (uint8_t)b);
+}
+
 
 class CTvalue {
 public:

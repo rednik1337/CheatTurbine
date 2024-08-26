@@ -1,5 +1,6 @@
 #include "logBarWindow.h"
 #include "../../gui.h"
+#include "../logs/logsWindow.h"
 
 void LogBarWindow::draw() {
     auto io = ImGui::GetIO();
@@ -28,7 +29,17 @@ void LogBarWindow::draw() {
                                             ImGuiWindowFlags_NoSavedSettings |
                                             ImGuiWindowFlags_NoBringToFrontOnFocus);
 
-    ImGui::TextUnformatted(Gui::logs.back().c_str()); ImGui::SameLine();
+    if (!io.WantCaptureMouse) {
+        if (ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
+            if (const bool logWindowExists = !Gui::getWindows<LogsWindow>().empty(); !logWindowExists)
+                Gui::addWindow(new LogsWindow());
+        }
+    }
+
+    std::string logStr = Gui::logs.back().first;
+    if (Gui::logs.back().second)
+        logStr += " x" + std::to_string(Gui::logs.back().second);
+    ImGui::TextUnformatted(logStr.c_str()); ImGui::SameLine();
     const std::string framerateStr = std::format("{:.2f}", io.Framerate);
 
     ImGui::SetCursorPosX(io.DisplaySize.x - windowPaddingX - ImGui::CalcTextSize(framerateStr.c_str()).x);

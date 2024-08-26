@@ -51,7 +51,7 @@ void PointerScanWindow::scanResults() {
                     if (ImGui::BeginMenu("Add to starred")) {
                         for (const auto starredAddressesWindow: Gui::getWindows<StarredAddressesWindow>()) {
                             if (ImGui::MenuItem(starredAddressesWindow->name.c_str()))
-                                starredAddressesWindow->addAddress("New pchain", nullptr, {selectedValueType.type, CTValueFlags(selectedValueType.flags | CTValueFlags::pchain)}, pchain); // TODO: add window highlighting
+                                starredAddressesWindow->addAddress("New pchain", nullptr, {selectedValueType.type, selectedValueType.flags | CTValueFlags::pchain}, pchain); // TODO: add window highlighting
                         }
 
                         ImGui::EndMenu();
@@ -61,7 +61,7 @@ void PointerScanWindow::scanResults() {
 
                 if (ImGui::IsItemHovered() and ImGui::IsMouseDoubleClicked(0)) {
                     for (const auto starredAddressesWindow: Gui::getWindows<StarredAddressesWindow>()) {
-                        starredAddressesWindow->addAddress("New pchain", nullptr, {selectedValueType.type, CTValueFlags(selectedValueType.flags | CTValueFlags::pchain)}, pchain); // TODO: add window highlighting
+                        starredAddressesWindow->addAddress("New pchain", nullptr, {selectedValueType.type, selectedValueType.flags | CTValueFlags::pchain}, pchain); // TODO: add window highlighting
                         break;
                     }
                 }
@@ -196,7 +196,7 @@ void PointerScanWindow::draw() {
         if (ImGui::Button("Add all")) {
             const auto window = Gui::getWindows<StarredAddressesWindow>().front();
             for (const auto& i: pointerScan.pChains)
-                window->addAddress("New pchain", nullptr, {selectedValueType.type, CTValueFlags(selectedValueType.flags | CTValueFlags::pchain)}, i);
+                window->addAddress("New pchain", nullptr, {selectedValueType.type, selectedValueType.flags | CTValueFlags::pchain}, i);
         }
         if (!selectedAddresses[0].second)
             ImGui::EndDisabled();

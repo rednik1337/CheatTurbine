@@ -45,11 +45,11 @@ void Widgets::valueTypeSelector(CTvalue& valueType, const bool enablePchain) {
             if (n == 1) {
                 if (valueType.type == i64 or valueType.type == i32 or valueType.type == i16 or valueType.type == i8)
                     if (ImGui::Selectable(items[n].c_str(), valueType.flags & isSigned))
-                        valueType.flags = CTValueFlags(valueType.flags ^ isSigned);
+                        valueType.flags = valueType.flags ^ isSigned;
             } else if (n == 0) {
                 if (enablePchain)
                     if (ImGui::Selectable(items[n].c_str(), valueType.flags & pchain))
-                        valueType.flags = CTValueFlags(valueType.flags ^ pchain);
+                        valueType.flags = valueType.flags ^ pchain;
             } else {
                 if (ImGui::Selectable(items[n].c_str(), currentItem == n))
                     currentItem = n;

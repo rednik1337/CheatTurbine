@@ -30,7 +30,7 @@ class StructureDissectorWindow final : public Window {
 public:
     void draw() override;
 
-    StructureDissectorWindow();
+    StructureDissectorWindow(void* address=nullptr);
 };
 
 #endif //STRUCTUREDISSECTOR_H

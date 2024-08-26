@@ -7,7 +7,6 @@ int main() {
 
 
 // TODO: project save/open
-// TODO: structure dissector
 // TODO: fix the pointerscan
 // TODO: multithreaded scanner
 // TODO: signature scanning
@@ -19,4 +18,5 @@ int main() {
 // TODO: disassembler
 // TODO: whats new window
 
-// TODO: string vm write
+// TODO: notification if process terminated
+// TODO: notifications

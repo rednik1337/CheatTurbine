@@ -189,8 +189,8 @@ void StarredAddressesWindow::draw() {
                     ImGui::TextUnformatted("???");
                 } else {
                     if (Widgets::valueInputTrueOnDeactivation(addresses[row].valueType, addresses[row].valueBytes.data(), addresses[row].displayType == hex)) {
-                        VirtualMemory::write(addresses[row].valueBytes.data(), addresses[row].address, addresses[row].valueBytes.size());
-                        Gui::log("Wrote {} to {:p}", addresses[row].valueType.format(addresses[row].valueBytes.data(), false), addresses[row].address);
+                        if (VirtualMemory::write(addresses[row].valueBytes.data(), addresses[row].address, addresses[row].valueBytes.size()))
+                            Gui::log("Wrote {} to {:p}", addresses[row].valueType.format(addresses[row].valueBytes.data(), false), addresses[row].address);
                     }
                 }
 
@@ -217,6 +217,9 @@ void StarredAddressesWindow::draw() {
                     }
                     if (ImGui::Selectable("Open in memory editor")) {
                         Gui::windows.emplace_back(new MemoryEditorWindow((uint64_t)addresses[row].address));
+                    }
+                    if (ImGui::Selectable("Open in structure dissector")) {
+                        Gui::windows.emplace_back(new StructureDissectorWindow(addresses[row].address));
                     }
                     if (ImGui::Selectable("Remove from starred")) {
                         addressesMarkedForDeletion.push_back(row);

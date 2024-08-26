@@ -6,7 +6,7 @@ StarredAddress::StarredAddress(std::string name, const CTvalue valueType, void* 
     this->name = std::move(name);
     this->valueType = valueType;
     this->address = address;
-    valueBytes.resize(16);  //TODO
+    valueBytes.resize(16);
 }
 
 
