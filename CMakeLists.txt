@@ -4,23 +4,56 @@ set(CMAKE_TOOLCHAIN_FILE ${CMAKE_CURRENT_SOURCE_DIR}/vcpkg/scripts/buildsystems/
 
 project(CheatTurbine VERSION 0.2.0)
 
+
+set(ARCH_LEVEL "native" CACHE STRING "Target microarchitecture level")
+
+set(TARGET_ARCH_FLAGS "")
+
+if(ARCH_LEVEL STREQUAL "x86-64")
+    set(TARGET_ARCH_FLAGS "-march=x86-64")
+elseif(ARCH_LEVEL STREQUAL "x86-64-v2")
+    set(TARGET_ARCH_FLAGS "-march=x86-64-v2")
+elseif(ARCH_LEVEL STREQUAL "x86-64-v3")
+    set(TARGET_ARCH_FLAGS "-march=x86-64-v3")
+elseif(ARCH_LEVEL STREQUAL "x86-64-v4")
+    set(TARGET_ARCH_FLAGS "-march=x86-64-v4")
+elseif(ARCH_LEVEL STREQUAL "native")
+    set(TARGET_ARCH_FLAGS "-march=native -mtune=native")
+else()
+    message(FATAL_ERROR "Invalid ARCH_LEVEL: ${ARCH_LEVEL}")
+endif()
+
+message("Compiling with ${TARGET_ARCH_FLAGS}")
+
+
 cmake_policy(SET CMP0069 NEW)
 set(CMAKE_POLICY_DEFAULT_CMP0069 NEW)
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
 
-message("Remove -march=native -mtune=native if distributing")
 
-set(CMAKE_C_FLAGS "Wall -Wextra -Winline -march=native -mtune=native -pipe")
-set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS} -g -ggdb3")
-set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS} -O3 -flto -fno-stack-protector -fcf-protection=none -fno-pie -no-pie")
+set(COMMON_FLAGS "-Wall -Wextra -Winline -pipe -static-libgcc -fno-stack-protector -fcf-protection=none -fno-pie -no-pie")
+set(DEBUG_FLAGS "-g -ggdb3")
+set(RELEASE_FLAGS "-DNDEBUG -DNS_BLOCK_ASSERTIONS -O3 -flto")
+
+set(CMAKE_C_FLAGS "${COMMON_FLAGS} ${TARGET_ARCH_FLAGS}")
+set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS} ${DEBUG_FLAGS}")
+set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS} ${RELEASE_FLAGS}")
 set(CMAKE_C_STANDARD 23)
 
-set(CMAKE_CXX_FLAGS "-Wall -Wextra -Winline -march=native -mtune=native -pipe")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} -g -ggdb3")
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -O3 -flto -fno-stack-protector -fcf-protection=none -fno-pie -no-pie")
+set(CMAKE_CXX_FLAGS "${COMMON_FLAGS} -static-libstdc++ ${TARGET_ARCH_FLAGS}")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} ${DEBUG_FLAGS}")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} ${RELEASE_FLAGS}")
 set(CMAKE_CXX_STANDARD 26)
 
+set(CMAKE_SKIP_RPATH TRUE)
+
+set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} -s")
+
+set(BUILD_SHARED_LIBS OFF)
+set(CMAKE_FIND_LIBRARY_PREFER_STATIC TRUE)
+
 set(CMAKE_THREAD_LIBS_INIT "-lpthread")
+
 
 find_package(imgui CONFIG REQUIRED)
 find_package(Vulkan REQUIRED)
