@@ -40,8 +40,45 @@ jobs:
       working-directory: ${{github.workspace}}/build_${{ matrix.arch_level }}
       run: ctest -C ${{env.BUILD_TYPE}}
 
-    - name: 'Upload Artifact'
+    - name: 'Upload Binary Artifact'
       uses: actions/upload-artifact@v4
       with:
         name: CheatTurbine_${{ matrix.arch_level }}
         path: ${{github.workspace}}/build_${{ matrix.arch_level }}/CheatTurbine
+
+    - name: 'Prepare AppDir'
+      run: |
+        mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
+        mkdir -p AppDir/usr/share/fonts/TTF
+        mkdir -p AppDir/usr/share/applications
+        mkdir -p AppDir/usr/bin
+        mkdir -p AppDir/usr/lib
+        touch AppDir/usr/share/icons/hicolor/256x256/apps/CheatTurbine.png
+        
+        wget -O AppDir/usr/share/fonts/TTF/JetBrainsMono.zip "https://github.com/ryanoasis/nerd-fonts/releases/download/v3.3.0/JetBrainsMono.zip"
+        unzip AppDir/usr/share/fonts/TTF/JetBrainsMono.zip -d AppDir/usr/share/fonts/TTF
+        rm AppDir/usr/share/fonts/TTF/JetBrainsMono.zip
+
+        echo "[Desktop Entry]
+        Type=Application
+        Name=CheatTurbine
+        Exec=CheatTurbine
+        Icon=CheatTurbine
+        Categories=Utility;" > AppDir/usr/share/applications/CheatTurbine.desktop
+
+        cp ${{github.workspace}}/build_${{ matrix.arch_level }}/CheatTurbine AppDir/usr/bin/CheatTurbine
+
+        wget https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
+        chmod +x linuxdeploy-x86_64.AppImage
+
+    - name: 'Create AppImage'
+      run: |
+        export NO_STRIP=1
+        export OUTPUT=CheatTurbine_${{ matrix.arch_level }}_appimage
+        ./linuxdeploy-x86_64.AppImage --appdir AppDir --output appimage
+        
+    - name: 'Upload AppImage Artifact'
+      uses: actions/upload-artifact@v4
+      with:
+        name: CheatTurbine_${{ matrix.arch_level }}_appimage
+        path: ${{github.workspace}}/CheatTurbine_${{ matrix.arch_level }}_appimage
