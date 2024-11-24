@@ -28,7 +28,7 @@ jobs:
           submodules: 'recursive'
 
     - name: 'Install dependencies'
-      run: sudo apt-get install libxinerama-dev libxcursor-dev xorg-dev libglu1-mesa-dev pkg-config
+      run: sudo apt-get install -y libxinerama-dev libxcursor-dev xorg-dev libglu1-mesa-dev pkg-config libfuse2
 
     - name: 'Configure CMake'
       run: cmake -B ${{github.workspace}}/build_${{ matrix.arch_level }} -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DARCH_LEVEL=${{ matrix.arch_level }}
