@@ -1,0 +1,47 @@
+name: Build Upload
+
+on:
+  push:
+    branches: [ "main" ]
+
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        arch_level:
+          - x86-64
+          - x86-64-v2
+          - x86-64-v3
+          - x86-64-v4
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+          submodules: 'recursive'
+
+    - name: 'Install dependencies'
+      run: sudo apt-get install libxinerama-dev libxcursor-dev xorg-dev libglu1-mesa-dev pkg-config
+
+    - name: 'Configure CMake'
+      run: cmake -B ${{github.workspace}}/build_${{ matrix.arch_level }} -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DARCH_LEVEL=${{ matrix.arch_level }}
+
+    - name: 'Build'
+      run: cmake --build ${{github.workspace}}/build_${{ matrix.arch_level }} -j$(nproc) --config ${{env.BUILD_TYPE}}
+
+    - name: 'Test'
+      working-directory: ${{github.workspace}}/build_${{ matrix.arch_level }}
+      run: ctest -C ${{env.BUILD_TYPE}}
+
+    - name: 'Upload Artifact'
+      uses: actions/upload-artifact@v4
+      with:
+        name: CheatTurbine_${{ matrix.arch_level }}
+        path: ${{github.workspace}}/build_${{ matrix.arch_level }}/CheatTurbine
