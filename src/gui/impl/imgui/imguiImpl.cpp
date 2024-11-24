@@ -3,11 +3,48 @@
 #include <cstdlib>
 #include <imgui_impl_glfw.h>
 #include <cstdio>
+#include <fontconfig/fontconfig.h>
+#include <string>
+#include <iostream>
 
 namespace ImGuiImpl {
     GLFWwindow* window;
     ImGui_ImplVulkanH_Window* wd;
     ImVec4 clearColor = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+}
+
+
+
+std::string findSystemFont(const std::string& fontName) {
+    const char* appdir = std::getenv("APPDIR");
+    if (appdir) {
+        std::string bundledFontPath = std::string(appdir) + "/usr/share/fonts/TTF/" + fontName + ".ttf";
+        if (FILE* file = fopen(bundledFontPath.c_str(), "r")) {
+            fclose(file);
+            return bundledFontPath;
+        }
+    }
+
+
+    FcInit();
+    FcPattern* pattern = FcNameParse((const FcChar8*)fontName.c_str());
+    FcConfigSubstitute(nullptr, pattern, FcMatchPattern);
+    FcDefaultSubstitute(pattern);
+
+    FcResult result;
+    FcPattern* matched = FcFontMatch(nullptr, pattern, &result);
+    if (matched) {
+        FcChar8* file = nullptr;
+        if (FcPatternGetString(matched, FC_FILE, 0, &file) == FcResultMatch) {
+            std::string fontPath((char*)file);
+            FcPatternDestroy(matched);
+            FcPatternDestroy(pattern);
+            return fontPath;
+        }
+        FcPatternDestroy(matched);
+    }
+    FcPatternDestroy(pattern);
+    return "";
 }
 
 
@@ -83,8 +120,9 @@ void ImGuiImpl::init() {
 
     ImFontAtlas* atlas = ImGui::GetIO().Fonts;
     atlas->Clear();
+    std::cout << findSystemFont("JetBrainsMonoNerdFont-Regular") << std::endl;
 
-    io.FontDefault = io.Fonts->AddFontFromFileTTF("/usr/share/fonts/TTF/JetBrainsMonoNerdFont-Regular.ttf", 17.0f * xscale);
+    io.FontDefault = io.Fonts->AddFontFromFileTTF(findSystemFont("JetBrainsMonoNerdFont-Regular").c_str(), 17.0f * xscale);
     atlas->Build();
     style = ImGui::GetStyle();
     style.ScaleAllSizes(xscale);

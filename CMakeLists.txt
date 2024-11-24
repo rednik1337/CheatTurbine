@@ -58,6 +58,7 @@ set(CMAKE_THREAD_LIBS_INIT "-lpthread")
 find_package(imgui CONFIG REQUIRED)
 find_package(Vulkan REQUIRED)
 find_package(glfw3 CONFIG REQUIRED)
+find_package(Fontconfig REQUIRED)
 
 add_executable(CheatTurbine src/main.cpp
         src/gui/gui.cpp
@@ -92,7 +93,7 @@ add_executable(CheatTurbine src/main.cpp
         src/backend/CTvalue/CTvalue.cpp
 )
 
-target_link_libraries(CheatTurbine PRIVATE Vulkan::Vulkan imgui::imgui glfw)
+target_link_libraries(CheatTurbine PRIVATE Vulkan::Vulkan imgui::imgui glfw fontconfig)
 
 configure_file(src/config/config.h.in config.h)
 target_include_directories(${PROJECT_NAME} PUBLIC "${PROJECT_BINARY_DIR}")
