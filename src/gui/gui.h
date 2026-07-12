@@ -17,12 +17,18 @@ namespace Gui {
     void mainLoop();
 
     void log(const std::string_view rt_fmt_str, auto&&... args) {
-        std::string str = std::vformat(rt_fmt_str, std::make_format_args(args...));
-        if (str == logs.back().first)
-            logs.back().second++;
-        else
-            logs.emplace_back(str, 0);
+    std::string str = std::vformat(rt_fmt_str, std::make_format_args(args...));
+
+    if (logs.empty()) {
+        logs.emplace_back(str, 0);
+        return;
     }
+
+    if (str == logs.back().first)
+        logs.back().second++;
+    else
+        logs.emplace_back(str, 0);
+}
 
     void addWindow(Window* window);
     template <typename T>
